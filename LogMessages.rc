@@ -1,0 +1,115 @@
+#include "LogCodes.h"
+
+STRINGTABLE
+BEGIN
+   LOG_DATE_TIME_FORMAT     L"ddddd tt.zzz"
+   LOG_ITEM_FMT_TXT         L"%0:s %1:-3.3s %2:-7.7s %3:-6.6s %5:4.4d %6:s"
+   LOG_ITEM_SYSLOG_FMT_TXT  L"Sev(%0:s) Fac(%1:s) Src(%2:s) Code(%3:d): %4:s"
+   LOG_ITEM_HDR_TXT         L"%-19.19s Sev   Fac   Source Code Message"
+   LOG_ITEM_HDR_DT_TXT      L"Date and Time"
+   LOG_ITEM_SEP_TXT         L"------------------- --- ------- ------ ---- -----------------------------------------------------"
+   LOG_FILE_CREATION_MSG    L"Log created on %0:s"
+END
+
+STRINGTABLE
+BEGIN
+  LOG_SEV_EMERGENCY      L"Emergency"
+  LOG_SEV_ALERT          L"Alert"
+  LOG_SEV_CRITICAL       L"Critical"
+  LOG_SEV_ERROR          L"Error"
+  LOG_SEV_WARNING        L"Warning"
+  LOG_SEV_NOTICE         L"Notice"
+  LOG_SEV_INFORMATIONAL  L"Informational"
+  LOG_SEV_DEBUG          L"Debug"
+END
+
+STRINGTABLE
+BEGIN
+  LOG_SEV_SHORT_EMERGENCY      L"Emr"
+  LOG_SEV_SHORT_ALERT          L"Alr"
+  LOG_SEV_SHORT_CRITICAL       L"Crt"
+  LOG_SEV_SHORT_ERROR          L"Err"
+  LOG_SEV_SHORT_WARNING        L"Wng"
+  LOG_SEV_SHORT_NOTICE         L"Ntc"
+  LOG_SEV_SHORT_INFORMATIONAL  L"Inf"
+  LOG_SEV_SHORT_DEBUG          L"Dbg"
+END
+
+STRINGTABLE
+BEGIN
+  LOG_FAC_KERNEL           L"Kernel"
+  LOG_FAC_USERLEVEL        L"UserLevel"
+  LOG_FAC_MAILSYSTEM       L"MailSystem"
+  LOG_FAC_SYSTEMDAEMON     L"SystemDaemon"
+  LOG_FAC_SECURITYONE      L"SecurityOne"
+  LOG_FAC_SYSLOGINTERNAL   L"SysLogInternal"
+  LOG_FAC_LPR              L"LPR"
+  LOG_FAC_NNTP             L"NNTP"
+  LOG_FAC_UUCP             L"UUCP"
+  LOG_FAC_CLOCKDAEMONONE   L"ClockDaemonOne"
+  LOG_FAC_SECURITYTWO      L"SecurityTwo"
+  LOG_FAC_FTPDAEMON        L"FTPDaemon"
+  LOG_FAC_NTP              L"NTP"
+  LOG_FAC_LOGAUDIT         L"LogAudit"
+  LOG_FAC_LOGALERT         L"LogAlert"
+  LOG_FAC_CLOCKDAEMONTWO   L"ClockDaemonTwo"
+  LOG_FAC_LOCALUSE0        L"LocalUse0"
+  LOG_FAC_LOCALUSE1        L"LocalUse1"
+  LOG_FAC_LOCALUSE2        L"LocalUse2"
+  LOG_FAC_LOCALUSE3        L"LocalUse3"
+  LOG_FAC_LOCALUSE4        L"LocalUse4"
+  LOG_FAC_LOCALUSE5        L"LocalUse5"
+  LOG_FAC_LOCALUSE6        L"LocalUse6"
+  LOG_FAC_LOCALUSE7        L"LocalUse7"
+END
+
+STRINGTABLE
+BEGIN
+  LOG_FAC_SHORT_KERNEL          L"Kernel"
+  LOG_FAC_SHORT_USERLEVEL       L"User"
+  LOG_FAC_SHORT_MAILSYSTEM      L"MailSys"
+  LOG_FAC_SHORT_SYSTEMDAEMON    L"SysDaem"
+  LOG_FAC_SHORT_SECURITYONE     L"SecOne"
+  LOG_FAC_SHORT_SYSLOGINTERNAL  L"SysLogI"
+  LOG_FAC_SHORT_LPR             L"LPR"
+  LOG_FAC_SHORT_NNTP            L"NNTP"
+  LOG_FAC_SHORT_UUCP            L"UUCP"
+  LOG_FAC_SHORT_CLOCKDAEMONONE  L"ClkDae1"
+  LOG_FAC_SHORT_SECURITYTWO     L"SecTwo"
+  LOG_FAC_SHORT_FTPDAEMON       L"FTPDaem"
+  LOG_FAC_SHORT_NTP             L"NTP"
+  LOG_FAC_SHORT_LOGAUDIT        L"LogAudt"
+  LOG_FAC_SHORT_LOGALERT        L"LogAlrt"
+  LOG_FAC_SHORT_CLOCKDAEMONTWO  L"ClkDae2"
+  LOG_FAC_SHORT_LOCALUSE0       L"LclUse0"
+  LOG_FAC_SHORT_LOCALUSE1       L"LclUse1"
+  LOG_FAC_SHORT_LOCALUSE2       L"LclUse2"
+  LOG_FAC_SHORT_LOCALUSE3       L"LclUse3"
+  LOG_FAC_SHORT_LOCALUSE4       L"LclUse4"
+  LOG_FAC_SHORT_LOCALUSE5       L"LclUse5"
+  LOG_FAC_SHORT_LOCALUSE6       L"LclUse6"
+  LOG_FAC_SHORT_LOCALUSE7       L"LclUse7"
+END
+
+STRINGTABLE
+BEGIN
+  LOG_ENT_APPLICATION  L"App"
+END
+
+STRINGTABLE
+BEGIN
+  LOG_MSG_FAILURE                            L"Errore: %0:s"
+  LOG_MSG_UNKNOWN_FAILURE                    L"Errore sconosciuto in '%0:s'"
+  LOG_MSG_DBG                                L"Debug: %0:s"
+  LOG_MSG_START_APP                          L"Avvio application"
+  LOG_MSG_END_APP                            L"Termine application"
+  LOG_MSG_START_PROCESS_FOLDER               L"Processing della cartella %0:s iniziato"
+  LOG_MSG_STOP_PROCESS_FOLDER                L"Processing della cartella %0:s terminato"
+END
+
+
+
+
+
+
+

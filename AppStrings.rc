@@ -1,0 +1,31 @@
+#include "AppStrIds.h"
+
+STRINGTABLE
+BEGIN
+    LOG_GRID_HDR_SEVERITY_ICN  L""
+    LOG_GRID_HDR_DATETIME      L"Date && Time"
+    LOG_GRID_HDR_SEVERITY      L"Sev"
+    LOG_GRID_HDR_SOURCE        L"Src"
+    LOG_GRID_HDR_CODE          L"Code"
+    LOG_GRID_HDR_MESSAGE       L"Message"
+
+    DEV_GRID_HDR_UDP           L"U"
+    DEV_GRID_HDR_SERIAL        L"S"
+    DEV_GRID_HDR_DEVICE_ID     L"Device ID"
+    DEV_GRID_HDR_CURRENT_IP    L"Current IP"
+    DEV_GRID_HDR_COM_PORT      L"COM Port"
+    DEV_GRID_HDR_IP_ADDR       L"Static IP"
+    DEV_GRID_HDR_NETMASK       L"Netmask"
+    DEV_GRID_HDR_GATEWAY       L"Gateway"
+    DEV_GRID_HDR_DHCP          L"DHCP"
+    DEV_GRID_HDR_FW_VER        L"FW Ver"
+    DEV_GRID_HDR_FW_DATE       L"FW Date"
+    DEV_GRID_HDR_DEV_TYPE      L"Type"
+    DEV_GRID_HDR_ALT_MAC_ADDR  L"Alt MAC Addr"
+
+    SPLASH_SCRN_INIT_TEXT          L"Inizializzazione..."
+    TITLE_AND_VERSION_FMT_MESSAGE  L"%s, Ver %s"
+    GUI_NOT_AVAIL_TEXT             L"N/A"
+END
+
+
