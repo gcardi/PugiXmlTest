@@ -13,6 +13,7 @@ int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
     {
          Application->Initialize();
          Application->MainFormOnTaskBar = true;
+         Application->Title = "PugiXml test bench";
          Application->CreateForm(__classid(TfrmMain), &frmMain);
          Application->CreateForm(__classid(TfrmInfo), &frmInfo);
          Application->Run();

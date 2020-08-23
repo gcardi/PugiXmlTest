@@ -69,7 +69,10 @@ __published:	// IDE-managed Components
     TTimer *Timer1;
     TTimer *Timer2;
     TStatusBar *StatusBar1;
-    TButton *Button1;
+    TEdit *edtDataExtractionTime;
+    TEdit *edtDBMSStoreTime;
+    TLabel *Label2;
+    TLabel *Label3;
     void __fastcall actFileSelectFolderExecute(TObject *Sender);
     void __fastcall actFileSelectFolderUpdate(TObject *Sender);
     void __fastcall actProcessFolderStartExecute(TObject *Sender);
@@ -110,7 +113,7 @@ private:	// User declarations
     };
     TaskCont tasks_;
     std::atomic<TaskCont::size_type> runningTasks_ {};
-    double spinPerMicroSec_ {};
+    double spinCountPerMicroSec_ {};
 
     static String GetModuleFileName();
     void SetupCaption();
@@ -131,24 +134,42 @@ private:	// User declarations
     static std::unique_ptr<LogObjType> CreateLogSubsystem( LogAppendCallbackType OnLogAppendItem );
     void LogNotifyChanges( LogInMemType& Sender, LogInMemType::ReasonType Reason );
     void KickLogTimer();
-    static std::tuple<double,double> EvaluateMTSpinDelay( size_t SampleCount, size_t SpinCount );
-    void DelayMicroSec( double Amount ) const {
+    static std::tuple<double,double> EvaluateMTSpinDelay( size_t SampleCount,
+                                                          size_t SpinCount );
+    static void DelayMicroSec( double Amount, double SpinPerMicroSec ) {
         auto volatile SpinCount =
-            static_cast<size_t>( ( Amount ) * spinPerMicroSec_ );
+            static_cast<size_t>( ( Amount ) * SpinPerMicroSec );
         while ( --SpinCount ) {}
     }
-    std::tuple<double,double> MeasureMTSpinDelay( size_t SampleCount, double DelayMicroSec );
-
+    static std::tuple<double,double> MeasureMTSpinDelay( size_t SampleCount,
+                                                         double DelayMicroSec,
+                                                         double SpinCountPerMicroSec );
+    static double EstimateSpinCountPerMicroSec();
+    void DelayMicroSec( double Amount ) {
+        DelayMicroSec( Amount, spinCountPerMicroSec_ );
+    }
     template<typename M, typename S, typename... A>
-    void LogMsg( M Message, S const & Severity, A... Args ) {
+    void LogMsg( M Message, S const & Severity, A&&... Args ) {
         logInMem_->Append(
             SvcApp::Log::LogItem(
                 LOG_ENT_APPLICATION, Message,
-                SvcApp::Log::LogParams( std::forward<A...>( Args )... ),
+                SvcApp::Log::LogParams( std::forward<A&&...>( Args )... ),
                 Now(), Severity
             )
         );
     }
+
+    int GetDataExtractionTimeVal() const;
+    int GetDBMSStoreTimeVal() const;
+
+    String GetDataExtractionTime() const;
+    void SetDataExtractionTime( String Val );
+    String GetDBMSStoreTime() const;
+    void SetDBMSStoreTime( String Val );
+
+    bool IsDataExtractionTimeValid() const;
+    bool IsDBMSStoreTimeValid() const;
+
 protected:
     virtual void __fastcall WndProc( Winapi::Messages::TMessage &Message ) override;
 public:		// User declarations
@@ -163,6 +184,12 @@ public:		// User declarations
     __property TStrings& SourceFolderMRUList = { read = GetSourceFolderMRUList };
     __property bool LogUpdateActive = {
         read = GetLogUpdateActive, write = SetLogUpdateActive
+    };
+    __property String DataExtractionTime = {
+        read = GetDataExtractionTime, write = SetDataExtractionTime
+    };
+    __property String DBMSStoreTime = {
+        read = GetDBMSStoreTime, write = SetDBMSStoreTime
     };
 };
 

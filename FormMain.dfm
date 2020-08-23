@@ -25,6 +25,20 @@ object frmMain: TfrmMain
     Height = 13
     Caption = 'Percorso'
   end
+  object Label2: TLabel
+    Left = 24
+    Top = 81
+    Width = 80
+    Height = 13
+    Caption = 'Tempo DOM ('#181's)'
+  end
+  object Label3: TLabel
+    Left = 176
+    Top = 81
+    Width = 84
+    Height = 13
+    Caption = 'Tempo DBMS ('#181's)'
+  end
   object BitBtn1: TBitBtn
     Left = 688
     Top = 46
@@ -45,9 +59,9 @@ object frmMain: TfrmMain
   end
   object pnlLog: TPanel
     Left = 0
-    Top = 152
+    Top = 136
     Width = 737
-    Height = 298
+    Height = 314
     Align = alBottom
     Anchors = [akLeft, akTop, akRight, akBottom]
     BevelOuter = bvNone
@@ -58,17 +72,18 @@ object frmMain: TfrmMain
       Left = 0
       Top = 19
       Width = 737
-      Height = 279
+      Height = 295
       Align = alClient
       BevelOuter = bvNone
       Caption = 'pnlLog'
       ShowCaption = False
       TabOrder = 0
+      ExplicitHeight = 279
       object ndrawgridLog: TNDrawGrid
         Left = 0
         Top = 0
         Width = 737
-        Height = 279
+        Height = 295
         Align = alClient
         ColCount = 6
         Color = clWindow
@@ -82,6 +97,7 @@ object frmMain: TfrmMain
         OnNormalCellGetText = ndrawgridLogNormalCellGetText
         CellAutoHintEnabled = True
         OnDrawCell = ndrawgridLogDrawCell
+        ExplicitHeight = 279
         ColWidths = (
           20
           142
@@ -162,13 +178,27 @@ object frmMain: TfrmMain
         Width = 50
       end>
   end
-  object Button1: TButton
+  object edtDataExtractionTime: TEdit
     Left = 24
-    Top = 88
-    Width = 75
-    Height = 25
-    Action = actProcessFolderStart
+    Top = 96
+    Width = 81
+    Height = 21
+    Alignment = taRightJustify
+    NumbersOnly = True
     TabOrder = 5
+    Text = '100'
+    TextHint = '2-300 '#181's'
+  end
+  object edtDBMSStoreTime: TEdit
+    Left = 176
+    Top = 96
+    Width = 81
+    Height = 21
+    Alignment = taRightJustify
+    NumbersOnly = True
+    TabOrder = 6
+    Text = '100'
+    TextHint = '20-20000 '#181's'
   end
   object ActionManager1: TActionManager
     ActionBars = <

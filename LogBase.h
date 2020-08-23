@@ -42,7 +42,7 @@ private:
     }
 
     template<typename T, typename... A>
-    void AppendLogParams( T const & Par, A... Args ) {
+    void AppendLogParams( T const & Par, A&&... Args ) {
         params_.push_back( Par );
         AppendLogParams( std::forward<A...>( Args )... );
     }
@@ -50,7 +50,7 @@ public:
     LogParams() {}
 
     template<typename T, typename... A>
-    LogParams( T const & Par, A... Args ) {
+    LogParams( T const & Par, A&&... Args ) {
         params_.reserve( 1 + sizeof...( Args ) );
         AppendLogParams( Par, std::forward<A...>( Args )... );
     }

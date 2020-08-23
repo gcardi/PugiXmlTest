@@ -29,7 +29,7 @@ void LogMessageTo( Log::LogBase<Log::LogItem>& ALogObj, M Message,
 
 template<typename M, typename S, typename... A>
 void LogMessageTo( Log::LogBase<Log::LogItem>& ALogObj, M Message,
-                   S const & Severity, A... Args )
+                   S const & Severity, A&&... Args )
 {
     ALogObj.Append(
         SvcApp::Log::LogItem(
@@ -51,7 +51,7 @@ void LogMessage( M Message, S const & Severity )
 //---------------------------------------------------------------------------
 
 template<typename M, typename S, typename... A>
-void LogMessage( M Message, S const & Severity, A... Args )
+void LogMessage( M Message, S const & Severity, A&&... Args )
 {
     if ( LogObj ) {
         LogMessageTo( *LogObj, Message, Severity, std::forward<A...>( Args )... );
@@ -60,7 +60,7 @@ void LogMessage( M Message, S const & Severity, A... Args )
 //---------------------------------------------------------------------------
 
 template<typename M, typename... A>
-void LogEmergencyMessage( M Message, A... Args )
+void LogEmergencyMessage( M Message, A&&... Args )
 {
     LogMessage(
         Message,
@@ -71,7 +71,7 @@ void LogEmergencyMessage( M Message, A... Args )
 //---------------------------------------------------------------------------
 
 template<typename M, typename... A>
-void LogAlertMessage( M Message, A... Args )
+void LogAlertMessage( M Message, A&&... Args )
 {
     LogMessage(
         Message, SvcApp::Log::DefSeverityType::Alert,
@@ -81,7 +81,7 @@ void LogAlertMessage( M Message, A... Args )
 //---------------------------------------------------------------------------
 
 template<typename M, typename... A>
-void LogCriticalMessage( M Message, A... Args )
+void LogCriticalMessage( M Message, A&&... Args )
 {
     LogMessage(
         Message, SvcApp::Log::DefSeverityType::Critical,
@@ -91,7 +91,7 @@ void LogCriticalMessage( M Message, A... Args )
 //---------------------------------------------------------------------------
 
 template<typename... A>
-void LogErrorMessage( A... Args )
+void LogErrorMessage( A&&... Args )
 {
     LogMessage(
         LOG_MSG_FAILURE, SvcApp::Log::DefSeverityType::Error,
@@ -101,7 +101,7 @@ void LogErrorMessage( A... Args )
 //---------------------------------------------------------------------------
 
 template<typename M, typename... A>
-void LogWarnMessage( M Message, A... Args )
+void LogWarnMessage( M Message, A&&... Args )
 {
     LogMessage(
         Message, SvcApp::Log::DefSeverityType::Warning,
@@ -111,7 +111,7 @@ void LogWarnMessage( M Message, A... Args )
 //---------------------------------------------------------------------------
 
 template<typename M, typename... A>
-void LogNoticeMessage( M Message, A... Args )
+void LogNoticeMessage( M Message, A&&... Args )
 {
     LogMessage(
         Message, SvcApp::Log::DefSeverityType::Notice,
@@ -121,7 +121,7 @@ void LogNoticeMessage( M Message, A... Args )
 //---------------------------------------------------------------------------
 
 template<typename M, typename... A>
-void LogInfoMessage( M Message, A... Args )
+void LogInfoMessage( M Message, A&&... Args )
 {
     LogMessage(
         Message, SvcApp::Log::DefSeverityType::Informational,
@@ -131,7 +131,7 @@ void LogInfoMessage( M Message, A... Args )
 //---------------------------------------------------------------------------
 
 template<typename... A>
-void LogDbgMessage( A... Args )
+void LogDbgMessage( A&&... Args )
 {
     LogMessage(
         LOG_MSG_DBG, SvcApp::Log::DefSeverityType::Debug,

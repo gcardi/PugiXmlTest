@@ -79,10 +79,48 @@ __fastcall TfrmMain::TfrmMain( TComponent* Owner, StoreOpts StoreOptions,
             }
         );
     LogInfoMessage( LOG_MSG_START_APP );
+
     LogDbgMessage( _D( "Evaluate Spin Delay" ) );
-    static constexpr size_t SampleCount = 5000;
-    static constexpr size_t SpinCount = 45000;
-    auto [Mu, Sigma] = EvaluateMTSpinDelay( SampleCount, SpinCount );
+
+    spinCountPerMicroSec_ = EstimateSpinCountPerMicroSec();
+
+    LogDbgMessage(
+        Format(
+            _D( "Estimated spin count per µs: %.2f" ),
+            ARRAYOFCONST(( static_cast<long double>( spinCountPerMicroSec_ ) ))
+        )
+    );
+
+
+    LogDbgMessage( Format( _T( "Start test 100 us" ) ) );
+    StopWatch SW;
+    DelayMicroSec( 100 );
+    auto Stop = SW.GetElapsedMicroseconds().QuadPart;
+    LogDbgMessage( Format( _T( "Test: %u" ), ARRAYOFCONST(( Stop )) ) );
+
+    LogDbgMessage( Format( _T( "Start test 1 ms" ) ) );
+    SW.Start();
+    DelayMicroSec( 1000 );
+    Stop = SW.GetElapsedMicroseconds().QuadPart;
+    LogDbgMessage( Format( _T( "Test: %u" ), ARRAYOFCONST(( Stop )) ) );
+
+    LogDbgMessage( Format( _T( "Start test 10 ms" ) ) );
+    SW.Start();
+    DelayMicroSec( 10000 );
+    Stop = SW.GetElapsedMicroseconds().QuadPart;
+    LogDbgMessage( Format( _T( "Test: %u" ), ARRAYOFCONST(( Stop )) ) );
+
+    LogDbgMessage( Format( _T( "Start test 100 ms" ) ) );
+    SW.Start();
+    DelayMicroSec( 100000 );
+    Stop = SW.GetElapsedMicroseconds().QuadPart;
+    LogDbgMessage( Format( _T( "Test: %u" ), ARRAYOFCONST(( Stop )) ) );
+
+    LogDbgMessage( Format( _T( "Start test 1 s" ) ) );
+    SW.Start();
+    DelayMicroSec( 1000000 );
+    Stop = SW.GetElapsedMicroseconds().QuadPart;
+    LogDbgMessage( Format( _T( "Test: %u" ), ARRAYOFCONST(( Stop )) ) );
 
 #if !defined( _DEBUG ) || defined( SPLASH_SCREEN )
     WaitableTimerSplash.WaitFor( INFINITE );
@@ -90,45 +128,6 @@ __fastcall TfrmMain::TfrmMain( TComponent* Owner, StoreOpts StoreOptions,
 
 //    actHelpAbout->Enabled = true;
 
-    LogDbgMessage(
-        Format(
-            _D( "La media per %u misurazioni di %u spin è %.1f µs, sigma: %.1f" ),
-            ARRAYOFCONST(( SampleCount, SpinCount, Mu, Sigma ))
-        )
-    );
-
-
-    spinPerMicroSec_ = static_cast<double>( SpinCount ) / Mu;
-
-    LogDbgMessage(
-        Format( _D( "Spin per µs %.2f" ), ARRAYOFCONST(( spinPerMicroSec_ )) )
-    );
-
-    static constexpr double Delay = 100.0;
-
-    auto [MMu, MSigma] = MeasureMTSpinDelay( SampleCount, Delay );
-
-    LogDbgMessage(
-        Format(
-            _D( "La media per %u misurazioni di delay per %.1f µs è: media=%.1f µs (sigma=%.1f)" ),
-            ARRAYOFCONST(( SampleCount, Delay, MMu, MSigma ))
-        )
-    );
-
-    spinPerMicroSec_ *= ( 1.0 - ( 1.0 - ( Delay / MMu ) ) / 2.0 ) * 0.98;
-
-    LogDbgMessage(
-        Format( _D( "Spin per µs %.2f (aggiustato)" ), ARRAYOFCONST(( spinPerMicroSec_ )) )
-    );
-
-    auto [VMu, VSigma] = MeasureMTSpinDelay( SampleCount, Delay );
-
-    LogDbgMessage(
-        Format(
-            _D( "La media (corretta) per %u misurazioni di delay per %.1f µs è: media=%.1f µs (sigma=%.1f)" ),
-            ARRAYOFCONST(( SampleCount, Delay, VMu, VSigma ))
-        )
-    );
 }
 //---------------------------------------------------------------------------
 
@@ -173,6 +172,8 @@ void TfrmMain::RestoreProperties()
     RESTORE_LOCAL_PROPERTY( SourceFolder );
     //RESTORE_LOCAL_PROPERTY( SourceFolderMRUList );
     GetConfigNode().GetItem( _D( "SourceFolderMRUList" ), SourceFolderMRUList );
+    RESTORE_LOCAL_PROPERTY( DataExtractionTime );
+    RESTORE_LOCAL_PROPERTY( DBMSStoreTime );
 }
 //---------------------------------------------------------------------------
 
@@ -180,6 +181,8 @@ void TfrmMain::SaveProperties() const
 {
     SAVE_LOCAL_PROPERTY( SourceFolder );
     SAVE_LOCAL_PROPERTY( SourceFolderMRUList );
+    SAVE_LOCAL_PROPERTY( DataExtractionTime );
+    SAVE_LOCAL_PROPERTY( DBMSStoreTime );
 }
 //---------------------------------------------------------------------------
 
@@ -258,7 +261,9 @@ void __fastcall TfrmMain::actProcessFolderStartExecute(TObject *Sender)
 void __fastcall TfrmMain::actProcessFolderStartUpdate(TObject *Sender)
 {
     TAction& Action = static_cast<TAction&>( *Sender );
-    Action.Enabled = !runningTasks_;
+    Action.Enabled = !runningTasks_ &&
+                     IsDataExtractionTimeValid() &&
+                     IsDBMSStoreTimeValid();
 }
 //---------------------------------------------------------------------------
 
@@ -565,75 +570,6 @@ static String GetFileSizeText( T const & Path )
 }
 //---------------------------------------------------------------------------
 
-
-void TfrmMain::ProcessFolder( String Path )
-{
-    TCursorManager CursorMngr;
-    LogDbgMessage(
-        Format(
-            _D( "Collezione nomi file per il percorso \'%s\'" ),
-            Path
-        )
-    );
-
-    namespace fs = std::filesystem;
-
-    std::vector<std::filesystem::directory_entry> Files;
-
-    for( auto const & p : fs::directory_iterator( SourceFolder.c_str() ) ) {
-        if ( SameText( p.path().extension().c_str(), _D( ".xml" ) ) ) {
-            Files.push_back( p );
-        }
-    }
-
-    TaskCont Tasks;
-    Tasks.reserve( Files.size() );
-    runningTasks_ = Files.size();
-
-    LogDbgMessage( Format( _D( "Inizio processing %d file XML" ), Files.size() ) );
-
-    for ( auto File : Files ) {
-        Tasks.push_back(
-            std::async(
-                std::launch::async,
-                [this]( auto const & FileEntry ) {
-                    StopWatch SW;
-                    pugiw::xml_document doc;
-                    auto result = doc.load_file( FileEntry.path().c_str() );
-                    auto const ParsingTime =
-                        SW.GetElapsedMicroseconds().QuadPart;
-                    SW.Start();
-
-for ( size_t volatile z {}; z < 100000 ; ++z ) {
-}
-
-
-                    auto const ProcessingTime =
-                        SW.GetElapsedMicroseconds().QuadPart;
-                    LogDbgMessage(
-                        Format(
-                            _D( "File \'%s\' (%s), %s parsing time %u µs, processing time %u µs" ),
-                            String( FileEntry.path().filename().c_str() ),
-                            GetFileSizeText( FileEntry.path() ),
-                            result.description(),
-                            ParsingTime,
-                            ProcessingTime
-                        )
-                    );
-
-                    if ( --runningTasks_ == 0 ) {
-                        LogDbgMessage( _D( "End processing" ) );
-                    }
-                },
-                File
-            )
-        );
-    }
-    tasks_ = std::move( Tasks );
-}
-
-//---------------------------------------------------------------------------
-
 void __fastcall TfrmMain::Timer2Timer(TObject *Sender)
 {
     auto const RunningTaskCount = runningTasks_.load();
@@ -710,7 +646,8 @@ std::tuple<double,double> TfrmMain::EvaluateMTSpinDelay( size_t SampleCount,
 //---------------------------------------------------------------------------
 
 std::tuple<double,double> TfrmMain::MeasureMTSpinDelay( size_t SampleCount,
-                                                        double Delay )
+                                                        double Delay,
+                                                        double SpinCountPerMicroSec )
 {
     std::vector<double> Samples;
     Samples.reserve( SampleCount );
@@ -724,9 +661,9 @@ std::tuple<double,double> TfrmMain::MeasureMTSpinDelay( size_t SampleCount,
             SampleTasks.push_back(
                 std::async(
                     std::launch::async,
-                    [this, Delay]() -> double {
+                    [Delay,SpinCountPerMicroSec]() -> double {
                         StopWatch SW;
-                        DelayMicroSec( Delay );
+                        DelayMicroSec( Delay, SpinCountPerMicroSec );
                         return SW.GetElapsedMicroseconds().QuadPart;
                     }
                 )
@@ -760,4 +697,147 @@ std::tuple<double,double> TfrmMain::MeasureMTSpinDelay( size_t SampleCount,
     return std::make_tuple( Mu, Sigma );
 }
 //---------------------------------------------------------------------------
+
+double TfrmMain::EstimateSpinCountPerMicroSec()
+{
+    static constexpr size_t SampleCount = 2000;
+    static constexpr size_t SpinCount = 2500;
+    auto [Mu, Sigma] = EvaluateMTSpinDelay( SampleCount, SpinCount );
+
+    LogDbgMessage(
+        Format(
+            _D( "La media per %u misurazioni di %u spin è %.1f µs, sigma: %.1f" ),
+            ARRAYOFCONST(( SampleCount, SpinCount, Mu, Sigma ))
+        )
+    );
+
+    return static_cast<double>( SpinCount ) / Mu; // * 0.99;
+}
+//---------------------------------------------------------------------------
+
+String TfrmMain::GetDataExtractionTime() const
+{
+    return edtDataExtractionTime->Text;
+}
+//---------------------------------------------------------------------------
+
+void TfrmMain::SetDataExtractionTime( String Val )
+{
+    edtDataExtractionTime->Text = Val;
+}
+//---------------------------------------------------------------------------
+
+String TfrmMain::GetDBMSStoreTime() const
+{
+    return edtDBMSStoreTime->Text;
+}
+//---------------------------------------------------------------------------
+
+void TfrmMain::SetDBMSStoreTime( String Val )
+{
+    edtDBMSStoreTime->Text = Val;
+}
+//---------------------------------------------------------------------------
+
+int TfrmMain::GetDataExtractionTimeVal() const
+{
+    return GetDataExtractionTime().ToIntDef( -1 );
+}
+//---------------------------------------------------------------------------
+
+int TfrmMain::GetDBMSStoreTimeVal() const
+{
+    return GetDBMSStoreTime().ToIntDef( -1 );
+}
+//---------------------------------------------------------------------------
+
+bool TfrmMain::IsDataExtractionTimeValid() const
+{
+    // 2-3000 µs
+    auto const Val = GetDataExtractionTimeVal();
+    return Val >= 2 && Val <= 3000;
+}
+//---------------------------------------------------------------------------
+
+bool TfrmMain::IsDBMSStoreTimeValid() const
+{
+    // 20-20000 µs
+    auto const Val = GetDBMSStoreTimeVal();
+    return Val >= 20 && Val <= 20000;
+}
+//---------------------------------------------------------------------------
+
+void TfrmMain::ProcessFolder( String Path )
+{
+    TCursorManager CursorMngr;
+    LogDbgMessage(
+        Format(
+            _D( "Collezione nomi file per il percorso \'%s\'" ),
+            Path
+        )
+    );
+
+    namespace fs = std::filesystem;
+
+    std::vector<std::filesystem::directory_entry> Files;
+
+    for( auto const & p : fs::directory_iterator( SourceFolder.c_str() ) ) {
+        if ( SameText( p.path().extension().c_str(), _D( ".xml" ) ) ) {
+            Files.push_back( p );
+        }
+    }
+
+    auto const PTime = GetDataExtractionTimeVal();
+    auto const STime = GetDBMSStoreTimeVal();
+
+    TaskCont Tasks;
+    Tasks.reserve( Files.size() );
+    runningTasks_ = Files.size();
+
+    LogDbgMessage( Format( _D( "Inizio processing %d file XML" ), Files.size() ) );
+
+    for ( auto File : Files ) {
+        Tasks.push_back(
+            std::async(
+                std::launch::async,
+                [this,PTime,STime]( auto const & FileEntry ) {
+                    StopWatch SW;
+                    pugiw::xml_document doc;
+                    auto result = doc.load_file( FileEntry.path().c_str() );
+                    auto const ParsingTime =
+                        SW.GetElapsedMicroseconds().QuadPart;
+
+                    SW.Start();
+                    DelayMicroSec( PTime );
+                    auto const ProcessingTime =
+                        SW.GetElapsedMicroseconds().QuadPart;
+
+                    SW.Start();
+                    DelayMicroSec( STime );
+                    auto const StoreTime =
+                        SW.GetElapsedMicroseconds().QuadPart;
+
+                    LogDbgMessage(
+                        Format(
+                            _D( "File \'%s\' (%s), %s parsing time %u µs, processing time %u µs" ),
+                            String( FileEntry.path().filename().c_str() ),
+                            GetFileSizeText( FileEntry.path() ),
+                            result.description(),
+                            ParsingTime,
+                            ProcessingTime
+                        )
+                    );
+
+                    if ( --runningTasks_ == 0 ) {
+                        LogDbgMessage( _D( "End processing" ) );
+                    }
+                },
+                File
+            )
+        );
+    }
+    tasks_ = std::move( Tasks );
+}
+//---------------------------------------------------------------------------
+
 
