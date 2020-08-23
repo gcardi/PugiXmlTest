@@ -92,8 +92,41 @@ __fastcall TfrmMain::TfrmMain( TComponent* Owner, StoreOpts StoreOptions,
 
     LogDbgMessage(
         Format(
-            _D( "La media per %u misurazioni di %u spin è %g µs, sigma: %g" ),
+            _D( "La media per %u misurazioni di %u spin è %.1f µs, sigma: %.1f" ),
             ARRAYOFCONST(( SampleCount, SpinCount, Mu, Sigma ))
+        )
+    );
+
+
+    spinPerMicroSec_ = static_cast<double>( SpinCount ) / Mu;
+
+    LogDbgMessage(
+        Format( _D( "Spin per µs %.2f" ), ARRAYOFCONST(( spinPerMicroSec_ )) )
+    );
+
+    static constexpr double Delay = 100.0;
+
+    auto [MMu, MSigma] = MeasureMTSpinDelay( SampleCount, Delay );
+
+    LogDbgMessage(
+        Format(
+            _D( "La media per %u misurazioni di delay per %.1f µs è: media=%.1f µs (sigma=%.1f)" ),
+            ARRAYOFCONST(( SampleCount, Delay, MMu, MSigma ))
+        )
+    );
+
+    spinPerMicroSec_ *= ( 1.0 - ( 1.0 - ( Delay / MMu ) ) / 2.0 ) * 0.98;
+
+    LogDbgMessage(
+        Format( _D( "Spin per µs %.2f (aggiustato)" ), ARRAYOFCONST(( spinPerMicroSec_ )) )
+    );
+
+    auto [VMu, VSigma] = MeasureMTSpinDelay( SampleCount, Delay );
+
+    LogDbgMessage(
+        Format(
+            _D( "La media (corretta) per %u misurazioni di delay per %.1f µs è: media=%.1f µs (sigma=%.1f)" ),
+            ARRAYOFCONST(( SampleCount, Delay, VMu, VSigma ))
         )
     );
 }
@@ -630,9 +663,8 @@ std::tuple<double,double> TfrmMain::EvaluateMTSpinDelay( size_t SampleCount,
                     std::launch::async,
                     [SpinCount]() -> double {
                         StopWatch SW;
-
-                        for ( size_t volatile z {}; z < SpinCount ; ++z ) {}
-
+                        size_t volatile z = SpinCount;
+                        while ( z-- ) {}
                         return SW.GetElapsedMicroseconds().QuadPart;
                     }
                 )
@@ -654,6 +686,58 @@ std::tuple<double,double> TfrmMain::EvaluateMTSpinDelay( size_t SampleCount,
     }
 
 #endif
+
+    auto const Sum =
+        std::accumulate(
+            std::begin( Samples ), std::end( Samples ), 0.0
+        );
+
+    auto const Mu = Sum / SampleCount;
+
+    auto const Sigma =
+        sqrt(
+            std::accumulate(
+                std::begin( Samples ), std::end( Samples ), 0.0,
+                [Mu]( auto Lhs, auto Rhs ) {
+                    auto const Diff = Rhs - Mu;
+                    return Lhs + ( Rhs - Mu ) * ( Rhs - Mu );
+                }
+            ) / SampleCount
+        );
+
+    return std::make_tuple( Mu, Sigma );
+}
+//---------------------------------------------------------------------------
+
+std::tuple<double,double> TfrmMain::MeasureMTSpinDelay( size_t SampleCount,
+                                                        double Delay )
+{
+    std::vector<double> Samples;
+    Samples.reserve( SampleCount );
+
+    {
+        using SpinTaskCont = std::vector<std::future<double>>;
+
+        SpinTaskCont SampleTasks;
+        SampleTasks.reserve( SampleCount );
+        for ( size_t i {} ; i < SampleCount ; ++i ) {
+            SampleTasks.push_back(
+                std::async(
+                    std::launch::async,
+                    [this, Delay]() -> double {
+                        StopWatch SW;
+                        DelayMicroSec( Delay );
+                        return SW.GetElapsedMicroseconds().QuadPart;
+                    }
+                )
+            );
+        }
+        std::transform(
+            std::begin( SampleTasks ), std::end( SampleTasks ),
+            std::back_inserter( Samples ),
+            []( auto& Val ){ return Val.get(); }
+        );
+    }
 
     auto const Sum =
         std::accumulate(

@@ -110,6 +110,7 @@ private:	// User declarations
     };
     TaskCont tasks_;
     std::atomic<TaskCont::size_type> runningTasks_ {};
+    double spinPerMicroSec_ {};
 
     static String GetModuleFileName();
     void SetupCaption();
@@ -131,6 +132,12 @@ private:	// User declarations
     void LogNotifyChanges( LogInMemType& Sender, LogInMemType::ReasonType Reason );
     void KickLogTimer();
     static std::tuple<double,double> EvaluateMTSpinDelay( size_t SampleCount, size_t SpinCount );
+    void DelayMicroSec( double Amount ) const {
+        auto volatile SpinCount =
+            static_cast<size_t>( ( Amount ) * spinPerMicroSec_ );
+        while ( --SpinCount ) {}
+    }
+    std::tuple<double,double> MeasureMTSpinDelay( size_t SampleCount, double DelayMicroSec );
 
     template<typename M, typename S, typename... A>
     void LogMsg( M Message, S const & Severity, A... Args ) {

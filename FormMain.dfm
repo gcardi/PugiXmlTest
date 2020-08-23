@@ -64,7 +64,6 @@ object frmMain: TfrmMain
       Caption = 'pnlLog'
       ShowCaption = False
       TabOrder = 0
-      ExplicitHeight = 362
       object ndrawgridLog: TNDrawGrid
         Left = 0
         Top = 0
@@ -83,7 +82,6 @@ object frmMain: TfrmMain
         OnNormalCellGetText = ndrawgridLogNormalCellGetText
         CellAutoHintEnabled = True
         OnDrawCell = ndrawgridLogDrawCell
-        ExplicitHeight = 362
         ColWidths = (
           20
           142
@@ -163,8 +161,6 @@ object frmMain: TfrmMain
       item
         Width = 50
       end>
-    ExplicitLeft = -32
-    ExplicitTop = 461
   end
   object Button1: TButton
     Left = 24
