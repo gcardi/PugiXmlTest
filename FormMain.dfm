@@ -78,7 +78,6 @@ object frmMain: TfrmMain
       Caption = 'pnlLog'
       ShowCaption = False
       TabOrder = 0
-      ExplicitHeight = 279
       object ndrawgridLog: TNDrawGrid
         Left = 0
         Top = 0
@@ -97,7 +96,6 @@ object frmMain: TfrmMain
         OnNormalCellGetText = ndrawgridLogNormalCellGetText
         CellAutoHintEnabled = True
         OnDrawCell = ndrawgridLogDrawCell
-        ExplicitHeight = 279
         ColWidths = (
           20
           142

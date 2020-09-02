@@ -83,6 +83,7 @@ __fastcall TfrmMain::TfrmMain( TComponent* Owner, StoreOpts StoreOptions,
     LogDbgMessage( _D( "Evaluate Spin Delay" ) );
 
     spinCountPerMicroSec_ = EstimateSpinCountPerMicroSec();
+    //spinCountPerMicroSec_ = 1000;
 
     LogDbgMessage(
         Format(
@@ -700,14 +701,16 @@ std::tuple<double,double> TfrmMain::MeasureMTSpinDelay( size_t SampleCount,
 
 double TfrmMain::EstimateSpinCountPerMicroSec()
 {
-    static constexpr size_t SampleCount = 2000;
+    static constexpr size_t SampleCount = 200;
     static constexpr size_t SpinCount = 2500;
     auto [Mu, Sigma] = EvaluateMTSpinDelay( SampleCount, SpinCount );
 
     LogDbgMessage(
         Format(
             _D( "La media per %u misurazioni di %u spin è %.1f µs, sigma: %.1f" ),
-            ARRAYOFCONST(( SampleCount, SpinCount, Mu, Sigma ))
+            ARRAYOFCONST((
+                SampleCount, SpinCount, (long double)Mu, (long double)Sigma
+            ))
         )
     );
 
